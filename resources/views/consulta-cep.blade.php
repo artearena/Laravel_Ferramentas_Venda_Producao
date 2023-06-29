@@ -90,34 +90,19 @@
                             ?>
                         </select>
                     </div>
-                    <div class="form-group mt-4">
-                        <label for="valor">Valor:</label>
-                        <input type="text" class="form-control" id="valor" name="valor">
-                    </div>
-                    <div class="form-group">
-                        <label for="peso">Peso:</label>
-                        <input type="text" class="form-control" id="peso" name="peso" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="quantidade">Quantidade:</label>
-                        <input type="number" class="form-control" id="quantidade" name="quantidade" min="1" value="1">
-                    </div>
-
-                    <!-- Tabela de produtos selecionados -->
-                    <table class="table mt-4">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>Valor</th>
-                                <th>Peso</th>
-                                <th>Quantidade</th>
-                                <th>Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="produtoTableBody"></tbody>
-                    </table>
                 </form>
+                <div class="form-group mt-4">
+                    <label for="valor">Valor:</label>
+                    <input type="text" class="form-control" id="valor" name="valor">
+                </div>
+                <div class="form-group">
+                    <label for="peso">Peso:</label>
+                    <input type="text" class="form-control" id="peso" name="peso" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="quantidade">Quantidade:</label>
+                    <input type="number" class="form-control" id="quantidade" name="quantidade" min="1" value="1">
+                </div>
             </div>
             <div class="col-md-6">
                 <form id="cep-form" method="POST" action="">
@@ -166,224 +151,189 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script>
-       $(function() {
-    // Inicializar o select2 para o campo de produto
-    $('#produto').select2();
+        $(function() {
+            // Inicializar o select2 para o campo de produto
+            $('#produto').select2();
 
-    function consultarProduto() {
-        var produto = $('#produto').val();
+            function consultarProduto() {
+                var produto = $('#produto').val();
 
-        // Lógica para consultar dados do produto
-        if (produto === 'produto1') {
-            $('#valor').val('10.00');
-            $('#peso').val('1.5');
-        } else if (produto === 'produto2') {
-            $('#valor').val('15.00');
-            $('#peso').val('2.0');
-        } else if (produto === 'produto3') {
-            $('#valor').val('20.00');
-            $('#peso').val('0.5');
-        } else {
-            // Realizar requisição AJAX para obter dados do produto do Tiny API
-            $.get('https://api.tiny.com.br/api2/produto.obter.php', {
-                token: 'bc3cdea243d8687963fa642580057531456d34fa',
-                id: produto,
-                formato: 'json'
-            }, function(response) {
-                var produtoData = JSON.parse(response);
-                $('#valor').val(produtoData.retorno.produto.preco);
-                $('#peso').val(produtoData.retorno.produto.peso_bruto);
-
-                // Adicionar registro à tabela de produtos selecionados
-                const tableBody = document.getElementById("produtoTableBody");
-                const newRow = tableBody.insertRow();
-                newRow.innerHTML = `
-                    <td>${produto}</td>
-                    <td>${produtoData.retorno.produto.nome}</td>
-                    <td><input type="text" class="form-control" value="${produtoData.retorno.produto.preco}" onchange="atualizarValor(this)"></td>
-                    <td>${produtoData.retorno.produto.peso_bruto}</td>
-                    <td><input type="number" class="form-control" min="1" value="1" onchange="atualizarQuantidade(this)"></td>
-                    <td><button class="btn btn-danger" onclick="removerProduto(this)">Remover</button></td>
-                `;
-                newRow.querySelector("td input").dataset.id = produto;
-            });
-        }
-    }
-
-    $('#produto').change(function() {
-        consultarProduto();
-    });
-
-    function atualizarValor(input) {
-        var id = input.dataset.id;
-        var valor = input.value;
-
-        // Atualizar o valor na tabela de produtos selecionados
-        var tableRow = input.closest("tr");
-        tableRow.querySelector("td:nth-child(3)").textContent = valor;
-    }
-
-    function atualizarQuantidade(input) {
-        var quantidade = input.value;
-
-        // Atualizar a quantidade na tabela de produtos selecionados
-        var tableRow = input.closest("tr");
-        tableRow.querySelector("td:nth-child(5)").textContent = quantidade;
-    }
-
-    function removerProduto(button) {
-        var tableRow = button.closest("tr");
-        tableRow.remove();
-    }
-
-    function consultarCep() {
-        var cep = $('#cep').val();
-
-        $.get('https://viacep.com.br/ws/' + cep + '/json/', function(response) {
-            $('#logradouro').val('');
-            $('#bairro').val('');
-            $('#cidade').val('');
-            $('#estado').val('');
-
-            if (!response.erro) {
-                $('#logradouro').val(response.logradouro);
-                $('#bairro').val(response.bairro);
-                $('#cidade').val(response.localidade);
-                $('#estado').val(response.uf);
-            }
-        });
-    }
-
-    $('#cep').on('input', function() {
-        $(this).val($(this).val().replace(/\D/g, ''));
-    });
-
-    $('#cep').on('keydown', function(event) {
-        if (event.keyCode === 13 || event.keyCode === 9) {
-            event.preventDefault();
-            consultarCep();
-        }
-    });
-
-    $('#cep').on('blur', function() {
-        consultarCep();
-    });
-
-    $('#cep').on('blur', function(event) {
-        event.preventDefault();
-
-        const url = "https://0239-2804-1b3-a243-1d72-9ca5-3867-e169-bef4.ngrok-free.app/consultar-kangu";
-
-        const cepDestino = $('#cep').val();
-        const peso = parseFloat($('#peso').val());
-        const valor = parseFloat($('#valor').val());
-        const quantidade = parseInt($('#quantidade').val());
-        const peso_total = peso * quantidade;
-        const valor_total = valor * quantidade;
-        const produto = [
-            {
-                peso: peso,
-                valor: valor,
-                quantidade: quantidade
-            }
-        ];
-        const bodyData = {
-            cepDestino: cepDestino,
-            vlrMerc: valor_total,
-            pesoMerc: peso_total,
-            produtos: produto
-        };
-
-        fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(bodyData)
-        })
-            .then(response => response.json())
-            .then(data => {
-                const cardsContainer = document.getElementById("cardsContainer");
-
-                while (cardsContainer.firstChild) {
-                    cardsContainer.removeChild(cardsContainer.firstChild);
-                }
-
-                if (data.alertas && data.alertas.length > 0) {
-                    data.alertas.forEach(alerta => {
-                        const alertElement = document.createElement("p");
-                        alertElement.textContent = alerta;
-                        cardsContainer.appendChild(alertElement);
+                // Lógica para consultar dados do produto
+                if (produto === 'produto1') {
+                    $('#valor').val('10.00');
+                    $('#peso').val('1.5');
+                } else if (produto === 'produto2') {
+                    $('#valor').val('15.00');
+                    $('#peso').val('2.0');
+                } else if (produto === 'produto3') {
+                    $('#valor').val('20.00');
+                    $('#peso').val('0.5');
+                } else {
+                    // Realizar requisição AJAX para obter dados do produto do Tiny API
+                    $.get('https://api.tiny.com.br/api2/produto.obter.php', {
+                        token: 'bc3cdea243d8687963fa642580057531456d34fa',
+                        id: produto,
+                        formato: 'json'
+                    }, function(response) {
+                        var produtoData = JSON.parse(response);
+                        $('#valor').val(produtoData.retorno.produto.preco);
+                        $('#peso').val(produtoData.retorno.produto.peso_bruto);
                     });
                 }
+            }
 
-                data.forEach(transportadora => {
-                    const cardElement = document.createElement("div");
-                    cardElement.classList.add("card");
+            $('#produto').change(function() {
+                consultarProduto();
+            });
 
-                    const nomeElement = document.createElement("h3");
-                    nomeElement.textContent = transportadora.transp_nome;
+            function consultarCep() {
+                var cep = $('#cep').val();
 
-                    const logoElement = document.createElement("img");
-                    logoElement.src = transportadora.url_logo;
+                $.get('https://viacep.com.br/ws/' + cep + '/json/', function(response) {
+                    $('#logradouro').val('');
+                    $('#bairro').val('');
+                    $('#cidade').val('');
+                    $('#estado').val('');
 
-                    const valorFreteElement = document.createElement("p");
-                    valorFreteElement.textContent = `Valor do Frete: ${transportadora.vlrFrete}`;
+                    if (!response.erro) {
+                        $('#logradouro').val(response.logradouro);
+                        $('#bairro').val(response.bairro);
+                        $('#cidade').val(response.localidade);
+                        $('#estado').val(response.uf);
+                    }
+                });
+            }
 
-                    const prazoEntregaElement = document.createElement("p");
-                    prazoEntregaElement.textContent = `Prazo de Entrega: ${transportadora.prazoEnt}`;
+            $('#cep').on('input', function() {
+                $(this).val($(this).val().replace(/\D/g, ''));
+            });
 
-                    const dataPrevEntregaElement = document.createElement("p");
-                    dataPrevEntregaElement.textContent = `Previsão de Entrega: ${transportadora.dtPrevEnt}`;
+            $('#cep').on('keydown', function(event) {
+                if (event.keyCode === 13 || event.keyCode === 9) {
+                    event.preventDefault();
+                    consultarCep();
+                }
+            });
 
-                    cardElement.appendChild(nomeElement);
-                    cardElement.appendChild(logoElement);
-                    cardElement.appendChild(valorFreteElement);
-                    cardElement.appendChild(prazoEntregaElement);
-                    cardElement.appendChild(dataPrevEntregaElement);
+            $('#cep').on('blur', function() {
+                consultarCep();
+            });
 
-                    cardsContainer.appendChild(cardElement);
+            $('#cep').on('blur', function(event) {
+                event.preventDefault();
 
-                    // Adicionar evento de seleção ao card
-                    cardElement.addEventListener("click", function() {
-                        // Remover classe "selected" de todos os cards
-                        const allCards = document.getElementsByClassName("card");
-                        for (let i = 0; i < allCards.length; i++) {
-                            allCards[i].classList.remove("selected");
+                const url = "https://0239-2804-1b3-a243-1d72-9ca5-3867-e169-bef4.ngrok-free.app/consultar-kangu";
+
+                const cepDestino = $('#cep').val();
+                const peso = parseFloat($('#peso').val());
+                const valor = parseFloat($('#valor').val());
+                const quantidade = parseInt($('#quantidade').val());
+                const peso_total = peso * quantidade;
+                const valor_total = valor * quantidade;
+                const produto = [
+                    {
+                        peso: peso,
+                        valor: valor,
+                        quantidade: quantidade
+                    }
+                ];
+                const bodyData = {
+                    cepDestino: cepDestino,
+                    vlrMerc: valor_total,
+                    pesoMerc: peso_total,
+                    produtos: produto
+                };
+
+                fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(bodyData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const cardsContainer = document.getElementById("cardsContainer");
+
+                        while (cardsContainer.firstChild) {
+                            cardsContainer.removeChild(cardsContainer.firstChild);
                         }
 
-                        // Adicionar classe "selected" ao card selecionado
-                        this.classList.add("selected");
+                        if (data.alertas && data.alertas.length > 0) {
+                            data.alertas.forEach(alerta => {
+                                const alertElement = document.createElement("p");
+                                alertElement.textContent = alerta;
+                                cardsContainer.appendChild(alertElement);
+                            });
+                        }
 
-                        // Exibir detalhes do frete no campo de texto
-                        const campoTexto = document.getElementById("campoTexto");
-                        const nomeProduto = $('#produto option:selected').text();
-                        const frete = transportadora.vlrFrete;
-                        const prazoEntrega = transportadora.prazoEnt;
-                        const dataPrevEntrega = transportadora.dtPrevEnt;
-                        const valorTotal = (valor * quantidade) + parseFloat(frete);
-                        const prazoConfeccao = 15; // Prazo de confecção fixo em 15 dias úteis
+                        data.forEach(transportadora => {
+                            const cardElement = document.createElement("div");
+                            cardElement.classList.add("card");
 
-                        const detalhesFrete = `Frete: ${cepDestino} - ${frete} - (Dia da postagem + ${prazoEntrega})\n`;
-                        const total = `Total: ${valorTotal}`;
-                        const prazo = `Prazo para confecção é de ${prazoConfeccao} dias úteis + prazo de envio.\nPrazo inicia-se após aprovação da arte e pagamento confirmado`;
+                            const nomeElement = document.createElement("h3");
+                            nomeElement.textContent = transportadora.transp_nome;
 
-                        campoTexto.value = `${nomeProduto}\n${detalhesFrete}${total}\n${prazo}`;
-                    });
-                });
-            })
-            .catch(error => console.error(error));
-    });
+                            const logoElement = document.createElement("img");
+                            logoElement.src = transportadora.url_logo;
 
-    // Copiar conteúdo do campo de texto ao clicar no botão "Copiar"
-    $('#botaoCopiar').click(function() {
-        const campoTexto = document.getElementById("campoTexto");
-        campoTexto.select();
-        document.execCommand("copy");
-        $('#avisoCopiado').show().delay(1500).fadeOut();
-    });
+                            const valorFreteElement = document.createElement("p");
+                            valorFreteElement.textContent = `Valor do Frete: ${transportadora.vlrFrete}`;
 
-    });
+                            const prazoEntregaElement = document.createElement("p");
+                            prazoEntregaElement.textContent = `Prazo de Entrega: ${transportadora.prazoEnt}`;
+
+                            const dataPrevEntregaElement = document.createElement("p");
+                            dataPrevEntregaElement.textContent = `Previsão de Entrega: ${transportadora.dtPrevEnt}`;
+
+                            cardElement.appendChild(nomeElement);
+                            cardElement.appendChild(logoElement);
+                            cardElement.appendChild(valorFreteElement);
+                            cardElement.appendChild(prazoEntregaElement);
+                            cardElement.appendChild(dataPrevEntregaElement);
+
+                            cardsContainer.appendChild(cardElement);
+
+                            // Adicionar evento de seleção ao card
+                            cardElement.addEventListener("click", function() {
+                                // Remover classe "selected" de todos os cards
+                                const allCards = document.getElementsByClassName("card");
+                                for (let i = 0; i < allCards.length; i++) {
+                                    allCards[i].classList.remove("selected");
+                                }
+
+                                // Adicionar classe "selected" ao card selecionado
+                                this.classList.add("selected");
+
+                                // Exibir detalhes do frete no campo de texto
+                                const campoTexto = document.getElementById("campoTexto");
+                                const nomeProduto = $('#produto option:selected').text();
+                                const frete = transportadora.vlrFrete;
+                                const prazoEntrega = transportadora.prazoEnt;
+                                const dataPrevEntrega = transportadora.dtPrevEnt;
+                                const valorTotal = (valor * quantidade) + parseFloat(frete);
+                                const prazoConfeccao = 15; // Prazo de confecção fixo em 15 dias úteis
+
+                                const detalhesFrete = `Frete: ${cepDestino} - ${frete} - (Dia da postagem + ${prazoEntrega})\n`;
+                                const total = `Total: ${valorTotal}`;
+                                const prazo = `Prazo para confecção é de ${prazoConfeccao} dias úteis + prazo de envio.\nPrazo inicia-se após aprovação da arte e pagamento confirmado`;
+
+                                campoTexto.value = `${nomeProduto}\n${detalhesFrete}${total}\n${prazo}`;
+                            });
+                        });
+                    })
+                    .catch(error => console.error(error));
+            });
+
+            // Copiar conteúdo do campo de texto ao clicar no botão "Copiar"
+            $('#botaoCopiar').click(function() {
+                const campoTexto = document.getElementById("campoTexto");
+                campoTexto.select();
+                document.execCommand("copy");
+                $('#avisoCopiado').show().delay(1500).fadeOut();
+            });
+
+        });
     </script>
 </body>
 </html>
